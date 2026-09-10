@@ -25,3 +25,11 @@ gcc-gfortran
 strace
 environment-modules
 perf
+
+# --- added from a prefer_system/system_requirement review ---
+# git: recipes fetch from git at build time ('git' system_requirement).
+# rsync: CMakeRecipe.Prepare + many recipes rsync the source copy.
+# perl-devel: EXTERN.h etc. ('libperl' system_requirement; perl-core lacks EXTERN.h).
+git
+rsync
+perl-devel

@@ -33,12 +33,23 @@ against. **Deliberately excluded:** heavy libraries (mysql, fftw, glfw, tbb, …
 — recipes BUILD those from source (e.g. GLFW compiles against the X11 `-devel`
 added here).
 
-> Source of truth: these lists are seeded from the proven
-> `bits-console/docker/bits-builder` sets. Additional system deps can be
-> surfaced from the recipes themselves with
-> `scripts/extract-system-deps.py` — run it when adding recipes and fold in what
-> is genuinely needed (Linux hints live inside `prefer_system_check` shell, so
-> the list stays curated rather than fully auto-generated).
+> Source of truth: seeded from the proven `bits-console/docker/bits-builder`
+> sets, then extended by a review of the `prefer_system` / `system_requirement`
+> checks of **all** recipes (surfaced with `scripts/extract-system-deps.py`).
+> Added from that review: the mandatory `system_requirement` shims (apr,
+> apr-util, cyrus-sasl, subversion, elfutils/libdw, snappy, perl `EXTERN.h`) and
+> the tools `git` + `rsync` (the latter used by `CMakeRecipe`'s own `Prepare`);
+> plus the lightweight `prefer_system` libraries xerces-c (Geant4 GDML), sqlite,
+> libuv and libunwind.
+>
+> Deliberately EXCLUDED (and why): heavy libraries recipes build from source —
+> mysql, hdf5, tbb, glfw; GPU/kernel image variants — cuda/nvcc, kernel-devel;
+> legacy motif (add only if the ROOT/Geant4 closure pulls it); system python
+> (bits builds Python); and checks already covered by the compiler (omp.h) or
+> ncurses (termcap.h) or that are macOS-only (the Brewfile covers those).
+> Because the image installs the whole list as one transaction, the new package
+> NAMES (some live in EPEL/CRB, already enabled) are confirmed by the first real
+> `make build` on each platform.
 
 ## 4. Compiler matrix  (`compilers/install-compilers.sh`)
 

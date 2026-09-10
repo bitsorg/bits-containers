@@ -22,3 +22,17 @@ libXrandr-devel
 libXinerama-devel
 libXi-devel
 libXrender-devel
+
+# --- added from a prefer_system/system_requirement review of all recipes ---
+# Mandatory (system_requirement): build hard-fails without these headers.
+apr-devel
+apr-util-devel
+cyrus-sasl-devel
+subversion-devel
+elfutils-devel
+snappy-devel
+# Optional (prefer_system): lets bits reuse the system lib instead of building.
+xerces-c-devel
+sqlite-devel
+libuv-devel
+libunwind-devel

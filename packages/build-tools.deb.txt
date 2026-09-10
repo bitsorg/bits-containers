@@ -23,3 +23,8 @@ pkg-config
 gfortran
 strace
 environment-modules
+
+# --- added from a prefer_system/system_requirement review ---
+git
+rsync
+# (EXTERN.h is covered by libperl-dev above)

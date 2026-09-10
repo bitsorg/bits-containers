@@ -45,13 +45,13 @@ RUN set -eux; \
           || dnf config-manager --set-enabled PowerTools; } || true; \
         pkgs="$(grep -vhE '^[[:space:]]*#|^[[:space:]]*$' \
                  /opt/bits/src/packages/build-tools.el.txt \
-                 /opt/bits/src/packages/dev-libs.el.txt)"; \
+                 /opt/bits/src/packages/dev-libs.el.txt | sed 's/#.*//')"; \
         dnf -y install $pkgs; { dnf -y install which || true; }; dnf clean all; \
     elif command -v apt-get >/dev/null 2>&1; then \
         export DEBIAN_FRONTEND=noninteractive; apt-get update; \
         pkgs="$(grep -vhE '^[[:space:]]*#|^[[:space:]]*$' \
                  /opt/bits/src/packages/build-tools.deb.txt \
-                 /opt/bits/src/packages/dev-libs.deb.txt)"; \
+                 /opt/bits/src/packages/dev-libs.deb.txt | sed 's/#.*//')"; \
         apt-get install -y --no-install-recommends $pkgs; \
         { apt-get install -y --no-install-recommends which || true; }; \
         { apt-get install -y --no-install-recommends linux-perf \
