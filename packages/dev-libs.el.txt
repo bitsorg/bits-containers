@@ -1,0 +1,24 @@
+# EL (-devel) headers for libraries bits takes from the system via prefer_system /
+# system_requirement. These must exist so recipes configure/compile against them.
+krb5-devel
+libuuid-devel
+openssl-devel
+zlib-devel
+bzip2-devel
+xz-devel
+libpng-devel
+freetype-devel
+libxml2-devel
+lz4-devel
+ncurses-devel
+readline-devel
+libX11-devel
+libXpm-devel
+libXext-devel
+libXft-devel
+mesa-libGLU-devel
+libXcursor-devel
+libXrandr-devel
+libXinerama-devel
+libXi-devel
+libXrender-devel

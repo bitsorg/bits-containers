@@ -1,0 +1,25 @@
+# Debian/Ubuntu build tools. libtool-bin: the `libtool` BINARY is split out on
+# Debian/Ubuntu. autopoint: gettext autoreconf support. gfortran: baseline Fortran.
+# (perf is kernel-tied on Ubuntu and added best-effort by the Dockerfile, not here.)
+bison
+flex
+make
+autoconf
+automake
+libtool
+libtool-bin
+patch
+perl
+libperl-dev
+tar
+gzip
+unzip
+texinfo
+gettext
+autopoint
+m4
+swig
+pkg-config
+gfortran
+strace
+environment-modules

@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# bits-containers — platform matrix (single source of truth).
+#
+# Each entry fully specifies ONE minimal-OS toolchain image. The Makefile and
+# scripts/platforms.py read this file; nothing else hard-codes the matrix.
+#
+# Fields
+#   name         Platform name == bits --architecture == image tag. Also the key
+#                used in bits-console config/platforms.yaml (keep the two in sync).
+#   base         Minimal OFFICIAL distro base image we build FROM (no third-party
+#                builder base). This is what makes the image minimal and owned.
+#   arch         bits architecture string (defaults to name; set only if different).
+#   gcc          Space-separated GCC major versions the image must provide,
+#                selectable at runtime via $GCC_VERSION. The FIRST listed is the
+#                image default (what plain gcc points at with no $GCC_VERSION).
+#   clang        Space-separated clang/LLVM major versions, selectable via
+#                $CLANG_VERSION. Empty = no clang axis on this platform.
+#   install_dir  CVMFS install-dir component (mirrors bits-console platforms.yaml).
+#   verify       (optional) notes on package availability to confirm on first build.
+#
+# NOTE on availability: EL provides non-default GCC via `gcc-toolset-<v>`
+# (/opt/rh/...), Ubuntu via suffixed `gcc-<v>` binaries. The runtime shim
+# (entrypoint/bits-cc-select.sh) hides that difference behind $GCC_VERSION.
+# Versions marked (verify) are not guaranteed packaged on that distro yet; the
+# image build FAILS LOUD if a requested version is unavailable (see
+# compilers/install-compilers.sh) rather than silently shipping fewer.
+
+platforms:
+  - name: x86_64-el9
+    base: almalinux:9-minimal
+    arch: x86_64-el9
+    gcc: "13 14 15"
+    clang: "19"
+    install_dir: el9-x86_64
+    verify: "el9 AppStream has gcc-toolset-13/14; gcc-toolset-15 on 9.6+ (confirm)"
+
+  - name: x86_64-el10
+    base: almalinux:10-minimal
+    arch: x86_64-el10
+    gcc: "14 15"
+    clang: "20"
+    install_dir: el10-x86_64
+    verify: "el10 default gcc is 14; gcc-toolset-15 availability to confirm"
+
+  - name: x86_64-ubuntu2404
+    base: ubuntu:24.04
+    arch: x86_64-ubuntu2404
+    gcc: "13 14"
+    clang: "18"
+    install_dir: ubuntu2404_x86_64
+    verify: "24.04 ships gcc-13/14 + clang-18; gcc-15 needs the toolchain PPA"
+
+  - name: x86_64-ubuntu2604
+    base: ubuntu:26.04
+    arch: x86_64-ubuntu2604
+    gcc: "15"
+    clang: "21"
+    install_dir: ubuntu2604_x86_64
+    verify: "26.04 not yet released — base tag and default gcc/clang to confirm"
+
+  - name: aarch64-el9
+    base: almalinux:9-minimal
+    arch: aarch64-el9
+    gcc: "13 14 15"
+    clang: "19"
+    install_dir: el9-aarch64
+    verify: "arm64 variant of almalinux:9-minimal; same gcc-toolset availability as x86_64-el9"

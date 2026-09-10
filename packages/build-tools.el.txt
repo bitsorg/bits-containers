@@ -1,0 +1,27 @@
+# EL build tools + bits runtime prereqs. GNU tar + gzip are REQUIRED for
+# byte-reproducible package tarballs (build_template.sh --sort/--mtime, gzip -n).
+# perf: Adaptyst system_requirement, checked INSIDE the container. texinfo/gettext/
+# m4/autotools: alidist recipes are autotools-first. environment-modules + strace:
+# `bits preload`. gcc-gfortran: the BASELINE Fortran compiler (versioned gfortran
+# comes with each gcc-toolset in the compiler layer).
+bison
+flex
+make
+autoconf
+automake
+libtool
+patch
+perl
+perl-core
+tar
+gzip
+unzip
+texinfo
+gettext-devel
+m4
+swig
+pkgconf-pkg-config
+gcc-gfortran
+strace
+environment-modules
+perf
