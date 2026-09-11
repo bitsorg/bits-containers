@@ -21,6 +21,12 @@ TAG       ?= latest
 BUILD_FLAGS ?= --pull
 # COMPILER_SOURCE: distro | source | auto
 COMPILER_SOURCE ?= distro
+
+# APT_MIRROR: fast Ubuntu mirror for the .deb bases. Defaults to the SWITCH
+# (Swiss academic) mirror over http — apt verifies packages by GPG signature, so
+# http needs no ca-certificates in the minimal base. Override or set empty for
+# the distro default: make build APT_MIRROR=http://<your-site-mirror>/ubuntu
+APT_MIRROR ?= http://mirror.switch.ch/ftp/mirror/ubuntu
 PLAT  := python3 scripts/platforms.py
 PLATFORMS := $(shell $(PLAT) names)
 CUDA_PLATFORMS := $(shell for p in $(shell $(PLAT) names); do [ -n "$$($(PLAT) get $$p cuda)" ] && echo $$p; done)
@@ -63,6 +69,7 @@ build-%:
 	  --build-arg GCC_VERSIONS="$$gcc" \
 	  --build-arg CLANG_VERSIONS="$$clang" \
 	  --build-arg COMPILER_SOURCE="$(COMPILER_SOURCE)" \
+	  --build-arg APT_MIRROR="$(APT_MIRROR)" \
 	  -t "$$img" .
 
 # Convenience: source-built or auto (distro+source) compilers for one platform.

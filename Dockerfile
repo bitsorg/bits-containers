@@ -22,6 +22,9 @@ ARG DEFAULT_CLANG=""
 # Provisioning: distro (default) | source (build all from source) | auto
 # (distro where packaged, source fallback for the rest).
 ARG COMPILER_SOURCE="distro"
+# Optional fast APT mirror (e.g. a site-local Ubuntu mirror). Empty = distro
+# default. On slow/distant default mirrors this is the biggest lever.
+ARG APT_MIRROR=""
 
 USER root
 SHELL ["/bin/bash", "-c"]
@@ -49,7 +52,17 @@ RUN set -eux; \
                  /opt/bits/src/packages/dev-libs.el.txt | sed 's/#.*//')"; \
         dnf -y install $pkgs; { dnf -y install which || true; }; dnf clean all; \
     elif command -v apt-get >/dev/null 2>&1; then \
-        export DEBIAN_FRONTEND=noninteractive; apt-get update; \
+        export DEBIAN_FRONTEND=noninteractive; \
+        printf 'Acquire::ForceIPv4 "true";\nAcquire::Retries "3";\nAcquire::http::Timeout "30";\n' \
+          > /etc/apt/apt.conf.d/99bits-net; \
+        if [ -n "${APT_MIRROR}" ]; then \
+          for f in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do \
+            [ -f "$f" ] && sed -i -E \
+              "s#https?://([a-z.]*\.)?archive\.ubuntu\.com/ubuntu#${APT_MIRROR}#g; s#https?://security\.ubuntu\.com/ubuntu#${APT_MIRROR}#g" \
+              "$f"; \
+          done; \
+        fi; \
+        apt-get update; \
         pkgs="$(grep -vhE '^[[:space:]]*#|^[[:space:]]*$' \
                  /opt/bits/src/packages/build-tools.deb.txt \
                  /opt/bits/src/packages/dev-libs.deb.txt | sed 's/#.*//')"; \
