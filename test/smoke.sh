@@ -8,6 +8,7 @@
 set -euo pipefail
 fail=0; note(){ echo "  $*"; }; bad(){ echo "FAIL: $*" >&2; fail=1; }
 
+[ -f /opt/bits/container-fingerprint.hash ] && echo "## container fingerprint: $(cat /opt/bits/container-fingerprint.hash)"
 echo "## build tools + dev-lib headers"
 for t in make bison flex autoconf automake libtool patch tar gzip unzip m4 swig strace gcc gfortran; do
   command -v "$t" >/dev/null || bad "missing tool: $t"

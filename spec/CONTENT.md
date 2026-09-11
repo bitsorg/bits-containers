@@ -144,3 +144,35 @@ toolchain image, not part of the minimal base:
 - The CUDA image inherits the base's compiler shim and entrypoint unchanged — the
   only additions are the toolkit and `nvcc` on PATH — so `$GCC_VERSION` selection,
   opt/dbg, and every other axis compose on top exactly as on the base image.
+
+## 9. Container fingerprint (provenance + reproducibility)
+
+`compilers/container-fingerprint.sh` runs at image build and writes a
+deterministic fingerprint of the image's OUTPUT-AFFECTING content —
+`/opt/bits/container-fingerprint.json` (sorted manifest) and
+`/opt/bits/container-fingerprint.hash` (its sha256). It folds the *versions* of:
+
+- the linked `-devel` libraries (`packages/dev-libs.*.txt`);
+- the curated toolchain set in `fingerprint.conf` — glibc + kernel headers,
+  binutils, and the code generators (bison, flex, swig, autoconf, automake,
+  libtool);
+- the EXACT version of every installed gcc/clang (`-dumpfullversion`), which the
+  arch token records only as `gccNN` — so a `prefer_system` compiler bumping from
+  15.2.0 to 15.3.0 is caught here even though the arch is unchanged.
+
+Excluded (do not affect emitted binaries): strace, perf, git, rsync, tar/gzip,
+texinfo. Two uses:
+
+- **Provenance (always):** the hash is baked into the image and belongs in each
+  artifact's `.meta.json`, so any build is traceable to the lib/tool versions it
+  was built against.
+- **`dependency_tracking: strict` (opt-in, bits side):** bits folds this hash into
+  a package's identity, so a real ABI/codegen change (openssl bump, gcc patch
+  bump) invalidates the cache while irrelevant image churn does not — a finer,
+  less churn-prone signal than the whole-image digest.
+
+It is a single container-wide fingerprint (an openssl bump re-hashes every
+package, not only those that link openssl); a per-package refinement —
+intersecting each recipe's own `prefer_system` set — is possible later. The set,
+query format and sort are fixed so the hash reproduces across builders; it is
+per-platform (the arch already separates distros).

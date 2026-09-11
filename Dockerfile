@@ -30,6 +30,7 @@ COPY packages/ /opt/bits/src/packages/
 COPY compilers/ /opt/bits/src/compilers/
 COPY entrypoint/bits-cc-select.sh /opt/bits/bin/bits-cc-select
 COPY entrypoint/bits-cc-entry.sh  /opt/bits/bin/bits-cc-entry
+COPY fingerprint.conf /opt/bits/src/fingerprint.conf
 
 # 1) Package-manager bootstrap + base build tools + dev-lib headers.
 #    almalinux:*-minimal ships microdnf only; add dnf once (the single concession
@@ -79,6 +80,10 @@ RUN set -eux; mkdir -p /opt/bits/cc; \
     /opt/bits/bin/bits-cc-select; \
     libdir="$(cat /opt/bits/cc/gcc-libdir 2>/dev/null || true)"; \
     if [ -n "$libdir" ]; then echo "$libdir" > /etc/ld.so.conf.d/bits-gcc-toolset.conf; ldconfig || true; fi
+
+# 3b) Fingerprint the output-affecting content (linked -devel libs + toolchain +
+#     exact compiler versions) for provenance and dependency_tracking: strict.
+RUN /opt/bits/src/compilers/container-fingerprint.sh
 
 # The shim dir is first on PATH, so plain gcc/g++/gfortran/cc/c++ are the default
 # compiler even when the entrypoint is bypassed; $GCC_VERSION re-points at runtime.
