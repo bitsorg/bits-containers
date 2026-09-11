@@ -1,5 +1,5 @@
 # Debian/Ubuntu build tools. libtool-bin: the `libtool` BINARY is split out on
-# Debian/Ubuntu. autopoint: gettext autoreconf support. gfortran: baseline Fortran.
+# Debian/Ubuntu. autopoint: gettext autoreconf support. gcc/g++/gfortran: base bootstrap compiler.
 # (perf is kernel-tied on Ubuntu and added best-effort by the Dockerfile, not here.)
 bison
 flex
@@ -20,6 +20,8 @@ autopoint
 m4
 swig
 pkg-config
+gcc
+g++
 gfortran
 strace
 environment-modules

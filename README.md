@@ -15,10 +15,8 @@ platform matrix is the single source of truth in **`platforms.yaml`**.
 platforms.yaml              the matrix (name, base, arch, gcc, clang, install_dir)
 Dockerfile                  one parameterized, pkg-manager-detecting build
 packages/*.txt              build tools + dev-lib headers (EL and Debian/Ubuntu)
-compilers/install-compilers.sh        the GCC/clang matrix from distro packages
-compilers/build-compilers-from-source.sh  from-source compilers (COMPILER_SOURCE=source|auto)
-compilers/source-versions.conf        major -> full version map for source builds
-entrypoint/bits-cc-*.sh     $GCC_VERSION/$CLANG_VERSION selection shim + entrypoint
+compilers/container-fingerprint.sh    fingerprint of output-affecting content
+compilers/install-cuda.sh             NVIDIA CUDA toolkit (cuda platforms)
 Dockerfile.cuda             CUDA flavor overlay (base image + NVIDIA toolkit)
 compilers/install-cuda.sh   installs the CUDA toolkit for the flavor
 macos/Brewfile              the macOS (no-container) parallel content set
@@ -69,4 +67,4 @@ availability** (`gcc-toolset-15` on EL9/EL10, `gcc-15`/clang on Ubuntu, the
 `ubuntu:26.04` base tag) is marked `verify:` in `platforms.yaml` and is
 confirmed by the first real `make build` on each platform. Where a version is
 not packaged, use `make build-auto-<plat>` (or `build-src-`) to fill it from
-source — pin the full version in `compilers/source-versions.conf` first.
+the stack's compiler is built by bits, not the image (see ADR-0012).

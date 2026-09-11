@@ -4,7 +4,7 @@
 This is the **contract** every bits-containers image satisfies. An image is a
 *minimal official-distro base* plus exactly the content below — no third-party
 builder base, nothing undeclared. The machine-readable sources of truth are
-`platforms.yaml`, `packages/*.txt`, and `compilers/install-compilers.sh`; this
+`platforms.yaml` and `packages/*.txt`; this
 document explains *what* and *why*.
 
 ## 1. Base
@@ -51,32 +51,19 @@ added here).
 > NAMES (some live in EPEL/CRB, already enabled) are confirmed by the first real
 > `make build` on each platform.
 
-## 4. Compiler matrix  (`compilers/install-compilers.sh`)
+## 4. Compiler  (`packages/build-tools.*.txt`)
 
-Each platform ships the GCC majors (and clang) named in its `platforms.yaml`
-row, from **distro packages only** — never a from-source compiler build:
+The image ships **one base bootstrap compiler** — `gcc`/`g++`/`gfortran` from the
+distro (pulled by `build-tools`), nothing more. It installs **no per-axis
+compilers**: the stack's real compiler (GCC-Toolchain, and clang) is built by
+**bits**, inside the image, per compiler axis, and reused across communities via
+`own_hash` + the content-addressed S3 cache (see ADR-0012). One minimal image per
+(OS, arch) therefore serves every gcc/clang axis.
 
-| Distro | GCC major `<v>` | clang `<v>` |
-|--------|-----------------|-------------|
-| EL     | `gcc-toolset-<v>` (under `/opt/rh/…`) | distro `clang` (single stream; `CLANG_VERSIONS` advisory) |
-| Ubuntu | `gcc-<v>`/`g++-<v>`/`gfortran-<v>` (toolchain PPA if needed) | `clang-<v>` |
-
-**Provisioning mode** (build arg `COMPILER_SOURCE`, Make target picks it):
-
-- `distro` (default) — distro packages only; the build **fails loud** if a
-  requested version is not packaged, so an image never silently ships fewer
-  compilers than its row promises.
-- `source` — build every requested GCC major (and clang) FROM SOURCE into
-  `/opt/bits/gcc/<v>` and `/opt/bits/llvm/<v>`, at the full versions pinned in
-  `compilers/source-versions.conf`. Slower and larger; for platforms/versions no
-  distro packages (e.g. `gcc-toolset-15` on an older EL).
-- `auto` — distro where packaged, source for the rest (the distro step runs
-  `--best-effort`, recording the gaps; the source step fills them). The typical
-  choice for a platform with partial availability.
-
-The runtime shim resolves a source-built `/opt/bits/gcc/<v>` with precedence over
-the distro `gcc-toolset`/suffixed binaries, so `$GCC_VERSION` selection and every
-downstream consumer are identical regardless of how the compiler was provisioned.
+The `gcc`/`clang` columns in `platforms.yaml` are informational — the axes bits
+intends to build for a platform — not something the image installs. CUDA is the
+one compiler component still baked in, as an overlay flavor (`Dockerfile.cuda`),
+because nvcc pins a host-compiler range (see §on CUDA).
 
 ## 5. Runtime compiler selection — the key contract  (`entrypoint/bits-cc-*.sh`)
 

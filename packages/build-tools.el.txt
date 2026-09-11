@@ -2,8 +2,8 @@
 # byte-reproducible package tarballs (build_template.sh --sort/--mtime, gzip -n).
 # perf: Adaptyst system_requirement, checked INSIDE the container. texinfo/gettext/
 # m4/autotools: alidist recipes are autotools-first. environment-modules + strace:
-# `bits preload`. gcc-gfortran: the BASELINE Fortran compiler (versioned gfortran
-# comes with each gcc-toolset in the compiler layer).
+# `bits preload`. gcc/gcc-c++/gcc-gfortran: the BASE bootstrap compiler bits uses to
+# build GCC-Toolchain (the stack's real compiler is built by bits, not the image).
 bison
 flex
 make
@@ -21,6 +21,8 @@ gettext-devel
 m4
 swig
 pkgconf-pkg-config
+gcc
+gcc-c++
 gcc-gfortran
 strace
 environment-modules

@@ -1,48 +1,22 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# macOS has no build container; the parallel to a bits-containers image is a
-# Homebrew installation with this specific set of formulae. `brew bundle` against
-# this file gives a Mac the same CONTENT guarantee the Linux images provide (see
-# ../spec/CONTENT.md): the build tools, the -devel equivalents recipes take via
-# prefer_system, and the compilers.
+# NOT the source of truth. On macOS the build "system layer" is defined by the
+# recipes themselves (their `homebrew_formula:` fields plus the bits build-system
+# base formulae), exactly the way packages/*.txt defines the Linux images. There
+# is therefore no hand-maintained Brewfile here to drift out of sync.
 #
-# Prerequisite NOT covered here: the Xcode Command Line Tools (`xcode-select
-# --install`) — Apple clang + the macOS SDK. The clang compiler axis uses that
-# (Apple clang versions do not map to LLVM majors; see clang-toolchain.sh).
+# Generate the real, config-accurate Brewfile with bits — it scans the recipes
+# your current configuration resolves and records the result in your local build
+# area at <work-dir>/<arch>/Brewfile (work-dir defaults to ./sw):
 #
-# This list should be kept in sync with what the recipes actually request on
-# macOS — regenerate the candidate set with:
-#   scripts/extract-system-deps.py brew <path/to/*.bits ...>
-
-# ── build tools (parallel to packages/build-tools.*.txt) ──────────────────────
-brew "autoconf"
-brew "automake"
-brew "libtool"
-brew "pkg-config"
-brew "swig"
-brew "bison"
-brew "flex"
-brew "gnu-tar"            # reproducible tarballs (GNU --sort/--mtime)
-brew "gzip"
-brew "make"
-brew "m4"
-brew "gettext"
-brew "texinfo"
-brew "modules"           # environment-modules (bits preload / module env)
-
-# ── dev libraries (parallel to packages/dev-libs.*.txt) ───────────────────────
-brew "openssl@3"
-brew "xz"
-brew "lz4"
-brew "freetype"
-brew "libpng"
-brew "libxml2"
-brew "readline"
-brew "ncurses"
-brew "krb5"
-brew "ossp-uuid"
-
-# ── compilers ─────────────────────────────────────────────────────────────────
-brew "gcc"               # provides gfortran (no standalone gfortran formula)
-brew "llvm"              # clang/clang++ for the clang axis (vs Apple clang)
+#   bits brew -a osx_arm64            # or your osx_* architecture
+#   brew bundle --file sw/osx_arm64/Brewfile
+#
+# Or let the build install formulae on demand:
+#
+#   bits build --brew ...            # runs `brew install <formula>` as needed
+#
+# Prerequisite bits does NOT install for you: the Xcode Command Line Tools
+# (`xcode-select --install`) — Apple clang + the macOS SDK, used by the clang
+# axis (Apple clang versions do not map to LLVM majors; see clang-toolchain.sh).

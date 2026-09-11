@@ -2,26 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # bits-containers — one parameterized Dockerfile that turns a MINIMAL OFFICIAL
-# distro base into a fully-specified bits build toolchain image. Works for the
-# EL (dnf/microdnf) and Ubuntu (apt) bases alike by detecting the package
-# manager. The content is defined entirely by:
-#   packages/{build-tools,dev-libs}.{el,deb}.txt   (system libs + tools)
-#   compilers/install-compilers.sh                 (the GCC/clang matrix)
-#   entrypoint/bits-cc-*.sh                         ($GCC_VERSION/$CLANG_VERSION shim)
+# distro base into a bits build environment: base OS + build tools + dev-lib
+# headers + a BASE bootstrap compiler. The stack's real compiler (GCC-Toolchain)
+# is built by bits, not the image, so one minimal image per (OS, arch) serves
+# every compiler axis. Content is defined by:
+#   packages/{build-tools,dev-libs}.{el,deb}.txt   (system libs + tools + base gcc)
 # See spec/CONTENT.md for the contract every image satisfies.
 #
-# Build args come from the platforms.yaml row (the Makefile passes them):
-#   BASE_IMAGE, GCC_VERSIONS, CLANG_VERSIONS, DEFAULT_GCC, DEFAULT_CLANG
+# Build args (the Makefile passes them from the platforms.yaml row):
+#   BASE_IMAGE, APT_MIRROR
 ARG BASE_IMAGE=almalinux:9-minimal
 FROM ${BASE_IMAGE}
 
-ARG GCC_VERSIONS="13 14 15"
-ARG CLANG_VERSIONS=""
-ARG DEFAULT_GCC=""
-ARG DEFAULT_CLANG=""
-# Provisioning: distro (default) | source (build all from source) | auto
-# (distro where packaged, source fallback for the rest).
-ARG COMPILER_SOURCE="distro"
 # Optional fast APT mirror (e.g. a site-local Ubuntu mirror). Empty = distro
 # default. On slow/distant default mirrors this is the biggest lever.
 ARG APT_MIRROR=""
@@ -31,13 +23,11 @@ SHELL ["/bin/bash", "-c"]
 
 COPY packages/ /opt/bits/src/packages/
 COPY compilers/ /opt/bits/src/compilers/
-COPY entrypoint/bits-cc-select.sh /opt/bits/bin/bits-cc-select
-COPY entrypoint/bits-cc-entry.sh  /opt/bits/bin/bits-cc-entry
 COPY fingerprint.conf /opt/bits/src/fingerprint.conf
 
 # 1) Package-manager bootstrap + base build tools + dev-lib headers.
 #    almalinux:*-minimal ships microdnf only; add dnf once (the single concession
-#    to "minimal") so CRB/EPEL and gcc-toolset are provisionable, then clean.
+#    to "minimal") so CRB/EPEL are provisionable, then clean.
 RUN set -eux; \
     if command -v microdnf >/dev/null 2>&1 && ! command -v dnf >/dev/null 2>&1; then \
         microdnf -y install dnf && microdnf clean all; \
@@ -73,36 +63,11 @@ RUN set -eux; \
         rm -rf /var/lib/apt/lists/*; \
     else echo "bits-containers: no supported package manager in base" >&2; exit 1; fi
 
-# 2) The compiler matrix. COMPILER_SOURCE picks how: distro packages, a
-#    from-source build, or auto (distro where packaged, source for the rest).
-RUN set -eux; C=/opt/bits/src/compilers; \
-    case "${COMPILER_SOURCE}" in \
-      distro) GCC_VERSIONS="${GCC_VERSIONS}" CLANG_VERSIONS="${CLANG_VERSIONS}" "$C/install-compilers.sh" ;; \
-      source) GCC_VERSIONS="${GCC_VERSIONS}" CLANG_VERSIONS="${CLANG_VERSIONS}" "$C/build-compilers-from-source.sh" ;; \
-      auto)   GCC_VERSIONS="${GCC_VERSIONS}" CLANG_VERSIONS="${CLANG_VERSIONS}" "$C/install-compilers.sh" --best-effort; \
-              "$C/build-compilers-from-source.sh" --missing ;; \
-      *) echo "bits-containers: bad COMPILER_SOURCE=${COMPILER_SOURCE} (distro|source|auto)" >&2; exit 2 ;; \
-    esac
-
-# 3) Bake the default selection (first listed wins) and materialize the shim.
-RUN set -eux; mkdir -p /opt/bits/cc; \
-    dg="${DEFAULT_GCC}"; [ -n "$dg" ] || { set -- ${GCC_VERSIONS}; dg="$1"; }; \
-    echo "$dg" > /opt/bits/cc/default-gcc; \
-    dc="${DEFAULT_CLANG}"; [ -n "$dc" ] || { set -- ${CLANG_VERSIONS}; dc="${1:-}"; }; \
-    echo "$dc" > /opt/bits/cc/default-clang; \
-    /opt/bits/bin/bits-cc-select; \
-    libdir="$(cat /opt/bits/cc/gcc-libdir 2>/dev/null || true)"; \
-    if [ -n "$libdir" ]; then echo "$libdir" > /etc/ld.so.conf.d/bits-gcc-toolset.conf; ldconfig || true; fi
-
-# 3b) Fingerprint the output-affecting content (linked -devel libs + toolchain +
-#     exact compiler versions) for provenance and dependency_tracking: strict.
+# 2) Fingerprint the output-affecting content (linked -devel libs + toolchain +
+#    the base compiler version) for provenance and dependency_tracking: strict.
 RUN /opt/bits/src/compilers/container-fingerprint.sh
 
-# The shim dir is first on PATH, so plain gcc/g++/gfortran/cc/c++ are the default
-# compiler even when the entrypoint is bypassed; $GCC_VERSION re-points at runtime.
-ENV PATH=/opt/bits/cc/bin:${PATH}
-
-# 4) Sanity — fail the image build if the contract isn't met.
+# 3) Sanity — fail the image build if the contract isn't met.
 RUN set -eux; \
     command -v gcc >/dev/null && gcc --version | head -1; \
     command -v c++ >/dev/null || { echo "no c++ sibling" >&2; exit 1; }; \
@@ -112,5 +77,4 @@ RUN set -eux; \
     done; \
     test -f /usr/include/uuid/uuid.h
 
-ENTRYPOINT ["/opt/bits/bin/bits-cc-entry"]
 CMD ["/bin/bash"]

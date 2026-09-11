@@ -9,7 +9,7 @@
 #   make build                  # build every platform image
 #   make build-x86_64-el9       # build one
 #   make push / push-<plat>     # push to $(REGISTRY)
-#   make test / test-<plat>     # run the in-image smoke test over its GCC set
+#   make test / test-<plat>     # run the in-image smoke test
 #   make shell-<plat>           # interactive shell in the image
 #   make check                  # validate matrix + lint shell/python
 #
@@ -19,9 +19,6 @@ ENGINE    ?= docker
 REGISTRY  ?= gitlab-registry.cern.ch/bits/containers
 TAG       ?= latest
 BUILD_FLAGS ?= --pull
-# COMPILER_SOURCE: distro | source | auto
-COMPILER_SOURCE ?= distro
-
 # APT_MIRROR: fast Ubuntu mirror for the .deb bases. Defaults to the SWITCH
 # (Swiss academic) mirror over http — apt verifies packages by GPG signature, so
 # http needs no ca-certificates in the minimal base. Override or set empty for
@@ -52,8 +49,7 @@ matrix:
 
 check:
 	@$(PLAT) check && echo "matrix OK"
-	@bash -n entrypoint/bits-cc-select.sh entrypoint/bits-cc-entry.sh \
-	         compilers/install-compilers.sh test/smoke.sh && echo "shell OK"
+	@bash -n test/smoke.sh && echo "shell OK"
 	@python3 -m py_compile scripts/platforms.py scripts/extract-system-deps.py && echo "python OK"
 
 build: $(addprefix build-,$(PLATFORMS))
@@ -61,32 +57,22 @@ push:  $(addprefix push-,$(PLATFORMS))
 test:  $(addprefix test-,$(PLATFORMS))
 
 build-%:
-	@base=$$($(PLAT) get $* base); gcc=$$($(PLAT) get $* gcc); clang=$$($(PLAT) get $* clang); \
+	@base=$$($(PLAT) get $* base); \
 	img=$(REGISTRY)/$*:$(TAG); \
-	echo "==> build $$img  FROM $$base  (gcc='$$gcc' clang='$$clang' compilers=$(COMPILER_SOURCE))"; \
+	echo "==> build $$img  FROM $$base"; \
 	$(ENGINE) build $(BUILD_FLAGS) \
 	  --build-arg BASE_IMAGE="$$base" \
-	  --build-arg GCC_VERSIONS="$$gcc" \
-	  --build-arg CLANG_VERSIONS="$$clang" \
-	  --build-arg COMPILER_SOURCE="$(COMPILER_SOURCE)" \
 	  --build-arg APT_MIRROR="$(APT_MIRROR)" \
 	  -t "$$img" .
-
-# Convenience: source-built or auto (distro+source) compilers for one platform.
-build-src-%:
-	@$(MAKE) build-$* COMPILER_SOURCE=source
-build-auto-%:
-	@$(MAKE) build-$* COMPILER_SOURCE=auto
 
 push-%:
 	@img=$(REGISTRY)/$*:$(TAG); echo "==> push $$img"; $(ENGINE) push "$$img"
 
 # Run the smoke test inside the image, exercising every GCC the platform ships.
 test-%:
-	@img=$(REGISTRY)/$*:$(TAG); gcc=$$($(PLAT) get $* gcc); clang=$$($(PLAT) get $* clang); \
-	echo "==> smoke $$img  (gcc='$$gcc' clang='$$clang')"; \
-	$(ENGINE) run --rm -e GCC_VERSIONS="$$gcc" -e CLANG_VERSIONS="$$clang" \
-	  -v "$(PWD)/test:/bits-test:ro" "$$img" /bits-test/smoke.sh
+	@img=$(REGISTRY)/$*:$(TAG); \
+	echo "==> smoke $$img"; \
+	$(ENGINE) run --rm -v "$(PWD)/test:/bits-test:ro" "$$img" /bits-test/smoke.sh
 
 shell-%:
 	@$(ENGINE) run --rm -it $(REGISTRY)/$*:$(TAG)
@@ -110,7 +96,6 @@ push-cuda-%:
 	@img=$(REGISTRY)/$*-cuda:$(TAG); echo "==> push $$img"; $(ENGINE) push "$$img"
 
 test-cuda-%:
-	@img=$(REGISTRY)/$*-cuda:$(TAG); gcc=$$($(PLAT) get $* gcc); clang=$$($(PLAT) get $* clang); \
+	@img=$(REGISTRY)/$*-cuda:$(TAG); \
 	echo "==> smoke $$img (incl. nvcc)"; \
-	$(ENGINE) run --rm -e GCC_VERSIONS="$$gcc" -e CLANG_VERSIONS="$$clang" \
-	  -v "$(PWD)/test:/bits-test:ro" "$$img" /bits-test/smoke.sh
+	$(ENGINE) run --rm -v "$(PWD)/test:/bits-test:ro" "$$img" /bits-test/smoke.sh

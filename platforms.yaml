@@ -12,20 +12,18 @@
 #   base         Minimal OFFICIAL distro base image we build FROM (no third-party
 #                builder base). This is what makes the image minimal and owned.
 #   arch         bits architecture string (defaults to name; set only if different).
-#   gcc          Space-separated GCC major versions the image must provide,
-#                selectable at runtime via $GCC_VERSION. The FIRST listed is the
-#                image default (what plain gcc points at with no $GCC_VERSION).
-#   clang        Space-separated clang/LLVM major versions, selectable via
-#                $CLANG_VERSION. Empty = no clang axis on this platform.
+#   gcc          INFORMATIONAL: the GCC major axes bits intends to build for this
+#                platform. The image installs NONE of these — it ships only a base
+#                bootstrap compiler; bits builds GCC-Toolchain per axis. Kept for
+#                documentation and the `matrix` view.
+#   clang        INFORMATIONAL (as gcc): the clang axes intended for this platform.
 #   install_dir  CVMFS install-dir component (mirrors bits-console platforms.yaml).
 #   verify       (optional) notes on package availability to confirm on first build.
 #
-# NOTE on availability: EL provides non-default GCC via `gcc-toolset-<v>`
-# (/opt/rh/...), Ubuntu via suffixed `gcc-<v>` binaries. The runtime shim
-# (entrypoint/bits-cc-select.sh) hides that difference behind $GCC_VERSION.
-# Versions marked (verify) are not guaranteed packaged on that distro yet; the
-# image build FAILS LOUD if a requested version is unavailable (see
-# compilers/install-compilers.sh) rather than silently shipping fewer.
+# NOTE: the image installs NO per-axis compilers. It ships one base bootstrap
+# gcc (from build-tools); bits builds GCC-Toolchain per axis inside the image and
+# reuses it across communities via own_hash + the S3 cache (see ADR-0012). The
+# gcc/clang fields above are informational only.
 
 platforms:
   - name: x86_64-el9
