@@ -16,7 +16,7 @@
 #   ENGINE=podman REGISTRY=... TAG=... BUILD_FLAGS='--pull' make build-x86_64-el9
 SHELL := /bin/bash
 ENGINE    ?= docker
-REGISTRY  ?= gitlab-registry.cern.ch/buncic/bits-containers
+REGISTRY  ?= gitlab-registry.cern.ch/bits/containers
 TAG       ?= latest
 BUILD_FLAGS ?= --pull
 COMPILER_SOURCE ?= distro   # distro | source | auto
