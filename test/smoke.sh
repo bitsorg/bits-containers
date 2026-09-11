@@ -34,6 +34,15 @@ for v in ${CLANG_VERSIONS:-}; do
   if command -v clang >/dev/null; then note "clang present: $(clang --version | head -1)"; else bad "CLANG_VERSION=$v but no clang on PATH"; fi
 done
 
+if command -v nvcc >/dev/null 2>&1; then
+  echo "## CUDA (nvcc present -> CUDA flavor image)"
+  note "$(nvcc --version | tail -1)"
+  # nvcc uses the selected gcc as host compiler; compiling a trivial .cu needs no GPU.
+  printf '__global__ void k(){}\nint main(){return 0;}\n' > /tmp/t.cu
+  nvcc -c /tmp/t.cu -o /tmp/t.cu.o 2>/tmp/nvcc.err \
+    || bad "nvcc cannot compile a trivial .cu with host gcc $(gcc -dumpversion): $(tail -1 /tmp/nvcc.err)"
+fi
+
 echo
 if [ "$fail" = 0 ]; then echo "SMOKE OK"; else echo "SMOKE FAILED" >&2; fi
 exit $fail

@@ -109,3 +109,38 @@ Line Tools provides the same content guarantee. See `macos/README.md`.
   (`claude/atlas-bits-toolchain-plan-*`) lands: provider of `$GCC_VERSION`/
   `$CLANG_VERSION`, so compiler versions and container updates don't gratuitously
   rebuild the stack.
+
+## 8. Build axes — what lives in the image vs a bits build-time knob
+
+A bits build layers several axes (`--defaults`). Only axes that need **content on
+disk** are encoded in the image; the rest are pure build-time knobs that a single
+image serves, each producing a distinct hash / CVMFS tree via `append_arch`.
+
+| Axis | Mechanism | In the image? |
+|------|-----------|---------------|
+| compiler (gccNN / clang) | `$GCC_VERSION`/`$CLANG_VERSION` shim | **yes** — the toolchain matrix |
+| CUDA (`--defaults cuda`) | `cuda` recipe is `system_requirement: nvcc` (never built) | **yes — a flavor** (below) |
+| build type (`opt`/`dbg`) | `defaults-opt`/`defaults-dbg` set only `CMAKE_BUILD_TYPE` + `append_arch` | **no** — one image builds both |
+| other env/`append_arch` axes | env only | **no** |
+
+So an `-opt` and a `-dbg` build use the *same* image (`bits build --defaults …opt`
+vs `…dbg`); adding image variants for them would be pure duplication.
+
+### CUDA flavor
+
+`--defaults cuda` needs `nvcc` at build time (the `cuda` recipe aborts if it is
+absent — bits never builds CUDA). So CUDA is a **flavor overlay** on a base
+toolchain image, not part of the minimal base:
+
+- `Dockerfile.cuda` + `compilers/install-cuda.sh` add the NVIDIA toolkit from the
+  official repos on top of `<platform>`, producing `<platform>-cuda`.
+- Which platforms get it, and the toolkit version, are declared per row in
+  `platforms.yaml` (`cuda:`); `make build-cuda-<platform>` builds them. Current
+  flavors: **x86_64-el9** and **x86_64-ubuntu2404** at CUDA **12.6**.
+- **Host-compiler compatibility is the constraint:** `nvcc` accepts a bounded GCC
+  range per CUDA release. 12.6 covers gcc ≤ 14, which matches the intended
+  `gcc13-opt` CUDA builds; a gcc15 CUDA build would need CUDA 13.x. The `cuda:`
+  version for a platform must cover the gcc majors used for its CUDA builds.
+- The CUDA image inherits the base's compiler shim and entrypoint unchanged — the
+  only additions are the toolkit and `nvcc` on PATH — so `$GCC_VERSION` selection,
+  opt/dbg, and every other axis compose on top exactly as on the base image.

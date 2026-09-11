@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# CUDA flavor — a thin overlay on a bits-containers BASE toolchain image that adds
+# the NVIDIA CUDA toolkit (nvcc). Built by `make build-cuda-<platform>`, producing
+# the `<platform>-cuda` image and matching bits' `-cuda` arch (defaults cuda).
+# The base image's compiler shim/entrypoint and package content are inherited; the
+# only additions are the toolkit and nvcc on PATH.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG CUDA_VERSION="12.6"
+USER root
+COPY compilers/install-cuda.sh /opt/bits/src/install-cuda.sh
+RUN CUDA_VERSION="${CUDA_VERSION}" /opt/bits/src/install-cuda.sh
+# nvcc after the compiler shim dir (unique name; the gcc/clang selection is
+# unaffected). CUDA_HOME for recipes/CMake FindCUDAToolkit.
+ENV PATH=${PATH}:/usr/local/cuda/bin
+ENV CUDA_HOME=/usr/local/cuda
+RUN command -v nvcc >/dev/null && nvcc --version | tail -1
+# ENTRYPOINT/CMD inherited from the base image (compiler selection still applies).

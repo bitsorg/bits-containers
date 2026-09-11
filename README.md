@@ -19,6 +19,8 @@ compilers/install-compilers.sh        the GCC/clang matrix from distro packages
 compilers/build-compilers-from-source.sh  from-source compilers (COMPILER_SOURCE=source|auto)
 compilers/source-versions.conf        major -> full version map for source builds
 entrypoint/bits-cc-*.sh     $GCC_VERSION/$CLANG_VERSION selection shim + entrypoint
+Dockerfile.cuda             CUDA flavor overlay (base image + NVIDIA toolkit)
+compilers/install-cuda.sh   installs the CUDA toolkit for the flavor
 macos/Brewfile              the macOS (no-container) parallel content set
 scripts/platforms.py        matrix parser used by the Makefile
 scripts/extract-system-deps.py   derive system-dep hints from recipes (an aid)
@@ -39,6 +41,10 @@ make build                          # everything
 # compilers from source (for versions a distro does not package):
 make build-src-x86_64-el10          # build all compilers from source
 make build-auto-x86_64-el10         # distro where available, source for the rest
+
+# CUDA flavor (needs nvcc in the builder; base image must exist first):
+make build-x86_64-el9 && make build-cuda-x86_64-el9   # -> x86_64-el9-cuda
+make test-cuda-x86_64-el9                              # smoke incl. nvcc
 ```
 
 Override with `ENGINE=podman`, `REGISTRY=…`, `TAG=…`, `BUILD_FLAGS='--pull'`.

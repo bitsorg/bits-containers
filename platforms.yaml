@@ -34,6 +34,7 @@ platforms:
     gcc: "13 14 15"
     clang: "19"
     install_dir: el9-x86_64
+    cuda: "12.6"          # CUDA flavor (make build-cuda-*); nvcc host-compiler must cover gcc majors above (12.6 supports gcc<=14)
     verify: "el9 AppStream has gcc-toolset-13/14; gcc-toolset-15 on 9.6+ (confirm)"
 
   - name: x86_64-el10
@@ -50,6 +51,7 @@ platforms:
     gcc: "13 14"
     clang: "18"
     install_dir: ubuntu2404_x86_64
+    cuda: "12.6"          # CUDA flavor (make build-cuda-*); nvcc host-compiler must cover gcc majors above (12.6 supports gcc<=14)
     verify: "24.04 ships gcc-13/14 + clang-18; gcc-15 needs the toolchain PPA"
 
   - name: x86_64-ubuntu2604

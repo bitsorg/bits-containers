@@ -16,7 +16,7 @@ import sys, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PFILE = os.path.join(HERE, "..", "platforms.yaml")
-FIELDS = ("name", "base", "arch", "gcc", "clang", "install_dir")
+FIELDS = ("name", "base", "arch", "gcc", "clang", "install_dir", "cuda")
 
 def load():
     txt = open(PFILE, encoding="utf-8").read()
