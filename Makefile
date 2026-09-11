@@ -19,17 +19,18 @@ ENGINE    ?= docker
 REGISTRY  ?= gitlab-registry.cern.ch/bits/containers
 TAG       ?= latest
 BUILD_FLAGS ?= --pull
-COMPILER_SOURCE ?= distro   # distro | source | auto
+# COMPILER_SOURCE: distro | source | auto
+COMPILER_SOURCE ?= distro
 PLAT  := python3 scripts/platforms.py
 PLATFORMS := $(shell $(PLAT) names)
 CUDA_PLATFORMS := $(shell for p in $(shell $(PLAT) names); do [ -n "$$($(PLAT) get $$p cuda)" ] && echo $$p; done)
 
-.PHONY: help matrix check build push test $(addprefix build-,$(PLATFORMS)) \
-        $(addprefix push-,$(PLATFORMS)) $(addprefix test-,$(PLATFORMS)) \
-        $(addprefix shell-,$(PLATFORMS)) \
-        $(addprefix build-src-,$(PLATFORMS)) $(addprefix build-auto-,$(PLATFORMS)) \
-        build-cuda push-cuda test-cuda $(addprefix build-cuda-,$(CUDA_PLATFORMS)) \
-        $(addprefix push-cuda-,$(CUDA_PLATFORMS)) $(addprefix test-cuda-,$(CUDA_PLATFORMS))
+# Only concrete (non-pattern) targets go here. Per-platform targets like
+# build-x86_64-el9 are produced by pattern rules (build-%, push-%, …); marking
+# them .PHONY would make GNU make SKIP the pattern-rule search for them
+# ("Nothing to be done"). Pattern-rule targets don't name files, so they already
+# re-run every invocation without being phony.
+.PHONY: help matrix check build push test build-cuda push-cuda test-cuda
 
 help:
 	@sed -n '2,20p' Makefile | sed 's/^# \{0,1\}//'
