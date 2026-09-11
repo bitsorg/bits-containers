@@ -38,10 +38,21 @@ if [ "$FAM" = el ]; then
   dnf -y install dnf-plugins-core epel-release || true
   { dnf config-manager --set-enabled crb || dnf config-manager --set-enabled powertools \
     || dnf config-manager --set-enabled PowerTools; } || true
+  # On EL exactly ONE gcc major is the BASE system compiler (the `gcc` package);
+  # every OTHER major comes via gcc-toolset-<N>. gcc-toolset-<default> does not
+  # exist (e.g. EL10's default is gcc 14 -> no gcc-toolset-14). gcc is present
+  # already (build-tools pulls gcc-gfortran), so dumpversion gives the default.
+  sysmaj="$(gcc -dumpversion 2>/dev/null | cut -d. -f1)"
   for v in $GCC_VERSIONS; do
-    echo "== gcc-toolset-$v"
-    dnf -y install "gcc-toolset-$v" "gcc-toolset-$v-gcc-c++" "gcc-toolset-$v-gcc-gfortran" \
-      || fail_or_record gcc "$v" "gcc-toolset-$v not available on this EL release"
+    if [ -n "$sysmaj" ] && [ "$v" = "$sysmaj" ]; then
+      echo "== system gcc $v (base packages; the default major has no gcc-toolset)"
+      dnf -y install gcc gcc-c++ gcc-gfortran \
+        || fail_or_record gcc "$v" "base gcc packages unavailable"
+    else
+      echo "== gcc-toolset-$v"
+      dnf -y install "gcc-toolset-$v" "gcc-toolset-$v-gcc-c++" "gcc-toolset-$v-gcc-gfortran" \
+        || fail_or_record gcc "$v" "gcc-toolset-$v not available on this EL release"
+    fi
   done
   if [ -n "$CLANG_VERSIONS" ]; then
     if dnf -y install clang llvm; then

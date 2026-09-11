@@ -42,6 +42,11 @@ if [ -n "$gv" ]; then
     link "$(command -v "gcc-$gv")" gcc; link "$(command -v "gcc-$gv")" cc
     link "$(command -v "g++-$gv")" g++; link "$(command -v "g++-$gv")" c++
     command -v "gfortran-$gv" >/dev/null 2>&1 && link "$(command -v "gfortran-$gv")" gfortran
+  elif [ -x /usr/bin/gcc ] && [ "$(/usr/bin/gcc -dumpversion 2>/dev/null | cut -d. -f1)" = "$gv" ]; then
+    # EL base system gcc (the default major has no gcc-toolset), or any matching plain system gcc.
+    link /usr/bin/gcc gcc; link /usr/bin/gcc cc
+    [ -x /usr/bin/g++ ] && { link /usr/bin/g++ g++; link /usr/bin/g++ c++; }
+    [ -x /usr/bin/gfortran ] && link /usr/bin/gfortran gfortran
   else
     echo "bits-cc-select: GCC_VERSION=$gv not installed in this image" >&2; exit 1
   fi
