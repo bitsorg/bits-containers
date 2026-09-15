@@ -35,3 +35,6 @@ perf
 git
 rsync
 perl-devel
+# hostname: some recipes' build banners call it (e.g. CORAL's PRE_BUILD_BANNER);
+# AlmaLinux minimal omits it. Build tool only, not fingerprinted.
+hostname

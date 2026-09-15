@@ -30,3 +30,6 @@ environment-modules
 git
 rsync
 # (EXTERN.h is covered by libperl-dev above)
+# hostname: recipes' build banners call it (CORAL PRE_BUILD_BANNER); not in the
+# minimal base. Build tool only, not fingerprinted.
+hostname
