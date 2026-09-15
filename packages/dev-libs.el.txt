@@ -36,3 +36,7 @@ xerces-c-devel
 sqlite-devel
 libuv-devel
 libunwind-devel
+# libtirpc-devel: Sun RPC headers (rpc/rpc.h), removed from glibc. ATLAS CI
+# installs it (ALMA9_PACKAGES); athena packages find_package(RPC) and CORAL's
+# server use it. Fingerprinted (dev-lib) -> applies at the clean-rebuild baseline.
+libtirpc-devel
