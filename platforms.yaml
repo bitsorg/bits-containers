@@ -26,6 +26,19 @@
 # gcc/clang fields above are informational only.
 
 platforms:
+  - name: x86_64-el8
+    base: almalinux:8-minimal
+    arch: x86_64-el8
+    gcc: "14 15"
+    clang: "19"
+    install_dir: el8-x86_64
+    # el8 base gcc is 8.5: the gcc14/gcc15 axes always build GCC-Toolchain from
+    # source in-container (bootstrapped from the base compiler — no gcc-toolset
+    # shortcut assumed), so first builds are slower than el9/el10. dev-libs.el.txt
+    # and build-tools.el.txt are shared with el9/el10 — confirm every package
+    # resolves on almalinux:8-minimal (some may be EPEL-only or renamed).
+    verify: "el8 base gcc 8.5 -> GCC-Toolchain always from source; confirm dev-libs.el.txt packages exist on almalinux:8-minimal (EPEL may be needed); clang from AppStream/EPEL to confirm"
+
   - name: x86_64-el9
     base: almalinux:9-minimal
     arch: x86_64-el9
@@ -42,6 +55,17 @@ platforms:
     clang: "20"
     install_dir: el10-x86_64
     verify: "el10 default gcc is 14; gcc-toolset-15 availability to confirm"
+
+  - name: x86_64-ubuntu2204
+    base: ubuntu:22.04
+    arch: x86_64-ubuntu2204
+    gcc: "13 14 15"
+    clang: "15"
+    install_dir: ubuntu2204_x86_64
+    # 22.04 (jammy) ships gcc-11/12 and clang-13/14/15; newer gcc axes build
+    # GCC-Toolchain from source in-container. dev-libs.deb.txt / build-tools.deb.txt
+    # are shared with 24.04/26.04 - confirm every apt package name resolves on jammy.
+    verify: "22.04 ships gcc-11/12, clang-13/14/15; newer gcc axes build from source; confirm dev-libs.deb.txt package names resolve on jammy"
 
   - name: x86_64-ubuntu2404
     base: ubuntu:24.04
