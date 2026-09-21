@@ -12,6 +12,8 @@
 #   make test / test-<plat>     # run the in-image smoke test
 #   make shell-<plat>           # interactive shell in the image
 #   make check                  # validate matrix + lint shell/python
+#   make fingerprint[-<plat>]   # recompute + adopt the container-fingerprint pin
+#                               # (fingerprints/<plat>.hash; keeps own_hash reuse stable)
 #
 #   ENGINE=podman REGISTRY=... TAG=... BUILD_FLAGS='--pull' make build-x86_64-el9
 SHELL := /bin/bash
@@ -36,7 +38,7 @@ CUDA_PLATFORMS := $(shell for p in $(shell $(PLAT) names); do [ -n "$$($(PLAT) g
 .PHONY: help matrix check build push test build-cuda push-cuda test-cuda fingerprint
 
 help:
-	@sed -n '2,20p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '4,/^[^#]/p' Makefile | sed '$$d' | sed 's/^# \{0,1\}//'
 	@echo; echo "platforms: $(PLATFORMS)"
 
 matrix:
