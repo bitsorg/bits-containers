@@ -12,6 +12,7 @@ liblz4-dev
 libncurses-dev
 libreadline-dev
 libx11-dev
+libmotif-dev   # Motif (Xm/*.h, Mrm/MrmAppl.h) — common.bits/motif
 libxpm-dev
 libxext-dev
 libxft-dev

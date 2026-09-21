@@ -13,7 +13,9 @@ lz4-devel
 ncurses-devel
 readline-devel
 libX11-devel
-libXt-devel   # X Toolkit Intrinsics (X11/Intrinsic.h) — motif
+libXt-devel   # X Toolkit Intrinsics (X11/Intrinsic.h)
+motif-devel   # Motif (Xm/*.h, Mrm/MrmAppl.h) — common.bits/motif; from EPEL.
+              # NB: 'openmotif' is the pre-RHEL7 name; el9 package is 'motif-devel'.
 libXpm-devel
 libXext-devel
 libXft-devel
