@@ -38,3 +38,9 @@ perl-devel
 # hostname: some recipes' build banners call it (e.g. CORAL's PRE_BUILD_BANNER);
 # AlmaLinux minimal omits it. Build tool only, not fingerprinted.
 hostname
+
+# libcap-devel: sys/capability.h for python-prctl (a leaf system-tool
+# binding). Kept OUT of dev-libs.* on purpose so it is not folded into the
+# container fingerprint — it links only a system tool, not the toolchain or
+# the physics stack, so it must not churn own_hash toolchain reuse.
+libcap-devel

@@ -33,3 +33,9 @@ rsync
 # hostname: recipes' build banners call it (CORAL PRE_BUILD_BANNER); not in the
 # minimal base. Build tool only, not fingerprinted.
 hostname
+
+# libcap-dev: sys/capability.h for python-prctl (a leaf system-tool
+# binding). Kept OUT of dev-libs.* on purpose so it is not folded into the
+# container fingerprint — it links only a system tool, not the toolchain or
+# the physics stack, so it must not churn own_hash toolchain reuse.
+libcap-dev
