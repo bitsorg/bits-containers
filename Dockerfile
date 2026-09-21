@@ -67,6 +67,24 @@ RUN set -eux; \
 #    the base compiler version) for provenance and dependency_tracking: strict.
 RUN /opt/bits/src/compilers/container-fingerprint.sh
 
+# Pin the fingerprint to a committed value (fingerprints/<plat>.hash, passed by the
+# Makefile) so incidental package drift on an image rebuild does not rehash the
+# own_hash toolchain. container-fingerprint.hash is AUTHORITATIVE — it is what the
+# bits build reads and folds into own_hash identity. container-fingerprint.json
+# and .computed keep the REAL computed hash + package manifest for provenance/drift
+# audit, so a pinned image still records what is actually installed.
+ARG PINNED_FINGERPRINT=
+RUN if [ -n "${PINNED_FINGERPRINT}" ]; then \
+      cp -f /opt/bits/container-fingerprint.hash /opt/bits/container-fingerprint.computed; \
+      printf '%s\n' "${PINNED_FINGERPRINT}" > /opt/bits/container-fingerprint.hash; \
+      c="$(cat /opt/bits/container-fingerprint.computed)"; \
+      if [ "$c" = "${PINNED_FINGERPRINT}" ]; then \
+        echo "container-fingerprint: pinned == computed (${PINNED_FINGERPRINT})"; \
+      else \
+        echo "container-fingerprint: PINNED=${PINNED_FINGERPRINT} COMPUTED=$c (drift; run 'make fingerprint-<plat>' to adopt)"; \
+      fi; \
+    fi
+
 # 3) Sanity — fail the image build if the contract isn't met.
 RUN set -eux; \
     command -v gcc >/dev/null && gcc --version | head -1; \

@@ -33,7 +33,7 @@ CUDA_PLATFORMS := $(shell for p in $(shell $(PLAT) names); do [ -n "$$($(PLAT) g
 # them .PHONY would make GNU make SKIP the pattern-rule search for them
 # ("Nothing to be done"). Pattern-rule targets don't name files, so they already
 # re-run every invocation without being phony.
-.PHONY: help matrix check build push test build-cuda push-cuda test-cuda
+.PHONY: help matrix check build push test build-cuda push-cuda test-cuda fingerprint
 
 help:
 	@sed -n '2,20p' Makefile | sed 's/^# \{0,1\}//'
@@ -59,10 +59,12 @@ test:  $(addprefix test-,$(PLATFORMS))
 build-%:
 	@base=$$($(PLAT) get $* base); \
 	img=$(REGISTRY)/$*:$(TAG); \
-	echo "==> build $$img  FROM $$base"; \
+	pin=""; [ -f fingerprints/$*.hash ] && pin="$$(cat fingerprints/$*.hash)"; \
+	echo "==> build $$img  FROM $$base$${pin:+  (pinned fingerprint $$pin)}"; \
 	$(ENGINE) build $(BUILD_FLAGS) \
 	  --build-arg BASE_IMAGE="$$base" \
 	  --build-arg APT_MIRROR="$(APT_MIRROR)" \
+	  $${pin:+--build-arg PINNED_FINGERPRINT="$$pin"} \
 	  -t "$$img" .
 
 push-%:
@@ -99,3 +101,30 @@ test-cuda-%:
 	@img=$(REGISTRY)/$*-cuda:$(TAG); \
 	echo "==> smoke $$img (incl. nvcc)"; \
 	$(ENGINE) run --rm -v "$(PWD)/test:/bits-test:ro" "$$img" /bits-test/smoke.sh
+
+# ── Fingerprint pin ───────────────────────────────────────────────────────────
+# Keep the container fingerprint STABLE across image rebuilds so incidental
+# package drift does not rehash the own_hash toolchain (an expensive rebuild).
+# build-% pins from fingerprints/<plat>.hash when it exists. `make fingerprint[-%]`
+# rebuilds UNPINNED, reads the freshly computed hash out of the image, and writes
+# the lock — the deliberate "adopt a new baseline" step (review + commit the
+# fingerprints/ diff). Prefer `fingerprint-<plat>` to adopt ONE platform; the
+# aggregate `fingerprint` rewrites EVERY lock (and aborts mid-way on a failure).
+# While pinned, a genuine ABI/codegen drift is hidden until you run it; do that
+# before a certified/production build.
+fingerprint: $(addprefix fingerprint-,$(PLATFORMS))
+
+fingerprint-%:
+	@base=$$($(PLAT) get $* base); \
+	probe=bits-fp-probe-$*:latest; \
+	echo "==> fingerprint $* — building UNPINNED probe image to compute the real hash"; \
+	$(ENGINE) build $(BUILD_FLAGS) \
+	  --build-arg BASE_IMAGE="$$base" \
+	  --build-arg APT_MIRROR="$(APT_MIRROR)" \
+	  -t "$$probe" .; \
+	mkdir -p fingerprints; \
+	fp=$$($(ENGINE) run --rm "$$probe" cat /opt/bits/container-fingerprint.hash); \
+	$(ENGINE) rmi -f "$$probe" >/dev/null 2>&1 || true; \
+	[ -n "$$fp" ] || { echo "ERROR: empty fingerprint for $*" >&2; exit 1; }; \
+	printf '%s\n' "$$fp" > fingerprints/$*.hash; \
+	echo "==> fingerprints/$*.hash = $$fp   (review 'git diff fingerprints/', commit, then 'make build-$*')"
