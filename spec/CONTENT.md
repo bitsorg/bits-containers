@@ -21,7 +21,9 @@ autotools (autoconf/automake/libtool/m4), bison/flex, make, patch, perl,
 `gzip -n`), unzip, texinfo + gettext/autopoint (alidist recipes are
 autotools-first), swig, pkg-config, `strace` + `environment-modules` (`bits
 preload`), a baseline `gfortran`, and `perf` on EL (Adaptyst's
-`system_requirement`, checked *inside* the container).
+`system_requirement`, checked *inside* the container). On Ubuntu also `curl` +
+`ca-certificates`, `xz-utils`, `bzip2` and `file`: recipes download and unpack at
+build time, and Ubuntu's minimal base has none of them (the EL base has `curl`).
 
 ## 3. System libraries recipes take via prefer_system  (`packages/dev-libs.*.txt`)
 
