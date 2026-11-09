@@ -34,3 +34,6 @@ libxerces-c-dev
 libsqlite3-dev
 libuv1-dev
 libunwind-dev
+# libffi-dev: CPython's _ctypes needs its headers, and Python's configure skips
+# the module silently without them (then scipy and cffi fail to import).
+libffi-dev

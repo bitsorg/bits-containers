@@ -42,7 +42,7 @@ added here).
 > apr-util, cyrus-sasl, subversion, elfutils/libdw, snappy, perl `EXTERN.h`) and
 > the tools `git` + `rsync` (the latter used by `CMakeRecipe`'s own `Prepare`);
 > plus the lightweight `prefer_system` libraries xerces-c (Geant4 GDML), sqlite,
-> libuv and libunwind.
+> libuv and libunwind; and libffi, without which bits' Python has no `_ctypes`.
 >
 > Deliberately EXCLUDED (and why): heavy libraries recipes build from source —
 > mysql, hdf5, tbb, glfw; GPU/kernel image variants — cuda/nvcc, kernel-devel;

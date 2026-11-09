@@ -43,3 +43,6 @@ libunwind-devel
 # installs it (ALMA9_PACKAGES); athena packages find_package(RPC) and CORAL's
 # server use it. Fingerprinted (dev-lib) -> applies at the clean-rebuild baseline.
 libtirpc-devel
+# libffi-devel: CPython's _ctypes needs its headers, and Python's configure skips
+# the module silently without them (then scipy and cffi fail to import).
+libffi-devel
