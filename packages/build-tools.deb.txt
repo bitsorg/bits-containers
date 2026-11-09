@@ -29,6 +29,14 @@ environment-modules
 # --- added from a prefer_system/system_requirement review ---
 git
 rsync
+# curl + ca-certificates: recipes download at build time (e.g. HltTCK's
+# download-binary); xz-utils, bzip2, file: unpacking and probing sources. The EL
+# minimal base has curl already; Ubuntu's has none of these.
+curl
+ca-certificates
+xz-utils
+bzip2
+file
 # (EXTERN.h is covered by libperl-dev above)
 # hostname: recipes' build banners call it (CORAL PRE_BUILD_BANNER); not in the
 # minimal base. Build tool only, not fingerprinted.
