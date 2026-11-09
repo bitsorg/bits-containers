@@ -82,7 +82,7 @@ platforms:
     gcc: "15"
     clang: "21"
     install_dir: ubuntu2604_x86_64
-    verify: "26.04 not yet released — base tag and default gcc/clang to confirm"
+    verify: "default gcc/clang to confirm (the ubuntu:26.04 base is in use)"
 
   - name: aarch64-el9
     base: almalinux:9-minimal

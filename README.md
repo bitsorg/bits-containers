@@ -86,8 +86,7 @@ and re-adopt before a certified/production build.
 
 v1 scaffold. Package *names* are verified (carried from
 `bits-console/docker/bits-builder`); the per-distro **compiler version
-availability** (`gcc-toolset-15` on EL9/EL10, `gcc-15`/clang on Ubuntu, the
-`ubuntu:26.04` base tag) is marked `verify:` in `platforms.yaml` and is
+availability** (`gcc-toolset-15` on EL9/EL10, `gcc-15`/clang on Ubuntu) is marked `verify:` in `platforms.yaml` and is
 confirmed by the first real `make build` on each platform. Where a version is
 not packaged, use `make build-auto-<plat>` (or `build-src-`) to fill it from
 the stack's compiler is built by bits, not the image (see ADR-0012).
