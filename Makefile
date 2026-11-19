@@ -9,6 +9,7 @@
 #   make build                  # build every platform image
 #   make build-x86_64-el9       # build one
 #   make push / push-<plat>     # push to $(REGISTRY)
+#   make trust-<plat>           # the CERN CA added to the published image (then push)
 #   make test / test-<plat>     # run the in-image smoke test
 #   make shell-<plat>           # interactive shell in the image
 #   make check                  # validate matrix + lint shell/python
@@ -68,6 +69,17 @@ build-%:
 	  --build-arg APT_MIRROR="$(APT_MIRROR)" \
 	  $${pin:+--build-arg PINNED_FINGERPRINT="$$pin"} \
 	  -t "$$img" .
+
+# Only the CERN CA step on top of the published image: its fingerprint and content
+# otherwise unchanged (checked), as a full rebuild with --pull would not keep them.
+trust-%:
+	@img=$(REGISTRY)/$*:$(TAG); echo "==> trust $$img"; \
+	$(ENGINE) pull "$$img" && \
+	old="$$($(ENGINE) run --rm "$$img" cat /opt/bits/container-fingerprint.hash)" && \
+	$(ENGINE) build --build-arg FROM_IMAGE="$$img" -t "$$img" . && \
+	new="$$($(ENGINE) run --rm "$$img" cat /opt/bits/container-fingerprint.hash)" && \
+	if [ "$$old" = "$$new" ]; then echo "container-fingerprint unchanged: $$new"; \
+	else echo "container-fingerprint changed: $$old -> $$new" >&2; exit 1; fi
 
 push-%:
 	@img=$(REGISTRY)/$*:$(TAG); echo "==> push $$img"; $(ENGINE) push "$$img"

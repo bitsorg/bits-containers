@@ -82,6 +82,12 @@ per platform with a committed `fingerprints/<plat>.hash`:
 While pinned, a genuine ABI/codegen change is also hidden, so run `make fingerprint`
 and re-adopt before a certified/production build.
 
+The CERN CA (`ca/`: the root and its issuing CA) is in each image's system trust,
+for bits-store and other CERN hosts, with `PIP_CERT` pointing pip at that bundle. It
+is added after the fingerprint, so it never enters it; `make trust-<plat>` adds just
+that step to the published image and checks the fingerprint is unchanged, then
+`make push-<plat>`.
+
 ## Status
 
 v1 scaffold. Package *names* are verified (carried from

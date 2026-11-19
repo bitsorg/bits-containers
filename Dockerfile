@@ -12,7 +12,10 @@
 # Build args (the Makefile passes them from the platforms.yaml row):
 #   BASE_IMAGE, APT_MIRROR
 ARG BASE_IMAGE=almalinux:9-minimal
-FROM ${BASE_IMAGE}
+# FROM_IMAGE: the toolchain stage, or a published image (make trust-<plat>) to add
+# only the CERN CA step to, leaving its content and fingerprint as they are.
+ARG FROM_IMAGE=toolchain
+FROM ${BASE_IMAGE} AS toolchain
 
 # Optional fast APT mirror (e.g. a site-local Ubuntu mirror). Empty = distro
 # default. On slow/distant default mirrors this is the biggest lever.
@@ -95,4 +98,22 @@ RUN set -eux; \
     done; \
     test -f /usr/include/uuid/uuid.h
 
+# 4) The CERN CA in the system trust, after the fingerprint (which it does not
+#    enter): bits-store and other CERN hosts verify. pip reads the system bundle
+#    (PIP_CERT), not its own CA list; the bundle keeps the public roots.
+FROM ${FROM_IMAGE}
+COPY ca/ /opt/bits/src/ca/
+RUN set -eux; \
+    command -v update-ca-trust >/dev/null || command -v update-ca-certificates >/dev/null || \
+      { echo "no system trust store (ca-certificates) in this image: rebuild it" >&2; exit 1; }; \
+    if [ -d /etc/pki/ca-trust/source/anchors ]; then \
+      cp /opt/bits/src/ca/*.pem /etc/pki/ca-trust/source/anchors/; \
+      update-ca-trust; b=/etc/pki/tls/certs/ca-bundle.crt; \
+    else \
+      for f in /opt/bits/src/ca/*.pem; do cp "$f" "/usr/local/share/ca-certificates/$(basename "$f" .pem).crt"; done; \
+      update-ca-certificates; b=/etc/ssl/certs/ca-certificates.crt; \
+    fi; \
+    ln -sfn "$b" /opt/bits/ca-bundle.crt; \
+    grep -qF "$(sed -n 2p /opt/bits/src/ca/CERN-Root-Certification-Authority-2.pem)" /opt/bits/ca-bundle.crt
+ENV PIP_CERT=/opt/bits/ca-bundle.crt
 CMD ["/bin/bash"]
